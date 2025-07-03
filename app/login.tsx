@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -11,17 +11,16 @@ import {
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {supabase} from '../lib/supabaseClient';
+import Checkbox from 'expo-checkbox';
 
 export default function LoginScreen() {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
+  const [idRemember, setIdRemember] = useState(false);
 
   const handleLogin = async () => {
     // 예제: 간단히 ID/PW 유효성 확인 후 로그인 처리
     if (id.trim() && pw.trim()) {
-    //   await AsyncStorage.setItem('isLoggedIn', 'true');
-    //   console.log('Login successful, redirecting to main app');
-    //   router.replace('/');
     const { data, error } = await supabase.auth.signInWithPassword({
         email: id,
         password: pw,
@@ -31,6 +30,7 @@ export default function LoginScreen() {
         console.error('Login error:', error);
       }else {
         await AsyncStorage.setItem('isLoggedIn', 'true');
+        if(idRemember) await AsyncStorage.setItem('rememberedId', id);
         console.log('Login successful, redirecting to main app');
         router.replace('/');
       }
@@ -43,7 +43,35 @@ export default function LoginScreen() {
     // Kakao 간편 로그인 로직
     alert('카카오 로그인 준비중');
   };
+useEffect(() => {
+  const rememberId = async () => {
+    try {
+      const asyncId = await AsyncStorage.getItem('rememberedId');
+      console.log('AsyncStorage에서 가져온 ID:', asyncId);
+      if (asyncId&&asyncId?.length > 0) {
+        setId(asyncId);
+        setIdRemember(true);
+      }
+    } catch (error) {
+      console.error('AsyncStorage 오류:', error);
+    }
+  };
 
+  rememberId();
+}, []);
+useEffect(() => {
+  const rememberId = async () => {
+    try {
+      if (!idRemember) {
+        await AsyncStorage.removeItem('rememberedId');
+      } 
+    } catch (error) {
+      console.error('AsyncStorage 오류:', error);
+    }
+  };
+
+  rememberId();
+}, [idRemember]);
   return (
     <View style={styles.container}>
         <Image
@@ -69,7 +97,15 @@ export default function LoginScreen() {
         value={pw}
         onChangeText={setPw}
       />
-
+      <View style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
+        <Checkbox
+          style={{ marginRight: 10 }}
+          value={idRemember}
+          onValueChange={setIdRemember}
+          color={idRemember ? '#4630EB' : undefined}
+        />      
+        <Text style={{color:'#000'}}>아이디 기억하기</Text>
+      </View>
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>로그인</Text>
       </TouchableOpacity>
