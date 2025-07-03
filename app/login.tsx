@@ -86,7 +86,7 @@ useEffect(() => {
         placeholderTextColor="#A68CFF"
         style={styles.input}
         value={id}
-        onChangeText={setId}
+        onChangeText={(text) => setId(text.toLowerCase())}
       />
 
       <TextInput
@@ -96,6 +96,7 @@ useEffect(() => {
         style={styles.input}
         value={pw}
         onChangeText={setPw}
+        onSubmitEditing={handleLogin}
       />
       <View style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
         <Checkbox
