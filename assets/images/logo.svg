@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<svg width="200" height="80" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - https://github.com/SVG-Edit/svgedit-->
+ <g class="layer">
+  <title>Layer 1</title>
+  <g id="svg_2">
+   <circle cx="15.66" cy="52" fill="#7B61FF" id="svg_3" r="10"/>
+   <rect fill="#7B61FF" height="30" id="svg_4" rx="2" width="4" x="13.66" y="22"/>
+   <circle cx="15.66" cy="22" fill="#A68CFF" id="svg_5" r="6"/>
+  </g>
+  <text fill="#7B61FF" font-family="Poppins, Arial, sans-serif" font-size="40" font-weight="600" id="svg_1" x="34.98" y="53">muwork</text>
+ </g>
+</svg>

@@ -1,31 +1,48 @@
-import { StyleSheet } from 'react-native';
+// app/index.tsx
+import { useEffect } from 'react';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, Button } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+export default function Index() {
+  useEffect(() => {
+    const checkLoginAndRedirect = async () => {
+      try {
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+        console.log('Index: checking login status:', isLoggedIn);
+        
+        if (isLoggedIn === 'true') {
+          console.log('Index: redirecting to main app');
+          router.replace('/(tabs)');
+        } else {
+          console.log('Index: redirecting to login');
+          router.replace('/login');
+        }
+      } catch (error) {
+        console.error('Index: AsyncStorage error:', error);
+        router.replace('/login');
+      }
+    };
 
-export default function TabOneScreen() {
+    checkLoginAndRedirect();
+  }, []);
+
+  // 로딩 화면 또는 스플래시 화면
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Loading...</Text>
+      <Button
+          title="LogOut"
+          onPress={() => {
+            // 로그인 처리 로직
+            // ex) context나 store에 로그인 상태 저장
+            AsyncStorage.setItem('isLoggedIn', 'false')
+            .then(() => {
+                console.log('Logout successful, redirecting to login');
+                router.replace('/login');
+            })
+          }}
+        />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
