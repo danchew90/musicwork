@@ -17,20 +17,25 @@ export default function LoginScreen() {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [idRemember, setIdRemember] = useState(false);
+  const [autoLoginTriggered, setAutoLoginTriggered] = useState(false);
 
-  const handleLogin = async () => {
-    // 예제: 간단히 ID/PW 유효성 확인 후 로그인 처리
-    if (id.trim() && pw.trim()) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: id,
-        password: pw,
+  const handleLogin = async (emailArg?: string, pwArg?: string) => {
+    const email = emailArg ?? id;
+    const password = pwArg ?? pw;
+
+    if (email.trim() && password.trim()) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
       if (error) {
         alert('로그인 실패: ' + error.message);
         console.error('Login error:', error);
-      }else {
+      } else {
         await AsyncStorage.setItem('isLoggedIn', 'true');
-        if(idRemember) await AsyncStorage.setItem('rememberedId', id);
+        await AsyncStorage.setItem('userEmail', email);
+        await AsyncStorage.setItem('pw', password);
+        if(idRemember) await AsyncStorage.setItem('rememberedId', email);
         console.log('Login successful, redirecting to main app');
         router.replace('/');
       }
@@ -40,46 +45,71 @@ export default function LoginScreen() {
   };
 
   const handleKakaoLogin = () => {
-    // Kakao 간편 로그인 로직
     alert('카카오 로그인 준비중');
   };
-useEffect(() => {
-  const rememberId = async () => {
-    try {
-      const asyncId = await AsyncStorage.getItem('rememberedId');
-      console.log('AsyncStorage에서 가져온 ID:', asyncId);
-      if (asyncId&&asyncId?.length > 0) {
-        setId(asyncId);
-        setIdRemember(true);
+
+  // 아이디 기억하기 기능
+  useEffect(() => {
+    const rememberId = async () => {
+      try {
+        const remembered = await AsyncStorage.getItem('rememberedId');
+        if (remembered) {
+          setId(remembered);
+          setIdRemember(true);
+        }
+      } catch (error) {
+        console.error('AsyncStorage 오류:', error);
       }
-    } catch (error) {
-      console.error('AsyncStorage 오류:', error);
-    }
-  };
+    };
+    rememberId();
+  }, []);
 
-  rememberId();
-}, []);
-useEffect(() => {
-  const rememberId = async () => {
-    try {
-      if (!idRemember) {
-        await AsyncStorage.removeItem('rememberedId');
-      } 
-    } catch (error) {
-      console.error('AsyncStorage 오류:', error);
-    }
-  };
+  // 자동 로그인 (상태 먼저 세팅 후 트리거)
+  useEffect(() => {
+    const loginAgain = async () => {
+      try {
+        const storedEmail = await AsyncStorage.getItem('userEmail');
+        const storedPw = await AsyncStorage.getItem('pw');
+        if (storedEmail && storedPw) {
+          setId(storedEmail);
+          setPw(storedPw);
+          setAutoLoginTriggered(true);
+        }
+      } catch (error) {
+        console.error('AsyncStorage 오류:', error);
+      }
+    };
+    loginAgain();
+  }, []);
 
-  rememberId();
-}, [idRemember]);
+  // 상태 세팅 완료 후 자동 로그인
+  useEffect(() => {
+    if (autoLoginTriggered) {
+      handleLogin(id, pw);
+    }
+  }, [autoLoginTriggered]);
+
+  // idRemember 상태가 꺼졌으면 기억 해제
+  useEffect(() => {
+    const rememberId = async () => {
+      try {
+        if (!idRemember) {
+          await AsyncStorage.removeItem('rememberedId');
+        }
+      } catch (error) {
+        console.error('AsyncStorage 오류:', error);
+      }
+    };
+    rememberId();
+  }, [idRemember]);
+
   return (
     <View style={styles.container}>
-        <Image
+      <Image
         source={require('../assets/images/logo.png')} 
         style={{ width: 200, height: 200 }} 
         resizeMode="contain"
-        />
-      {/* <Text style={styles.title}>Login</Text> */}
+      />
 
       <TextInput
         placeholder="ID"
@@ -96,9 +126,10 @@ useEffect(() => {
         style={styles.input}
         value={pw}
         onChangeText={setPw}
-        onSubmitEditing={handleLogin}
+        onSubmitEditing={() => handleLogin()}
       />
-      <View style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
+
+      <View style={{flexDirection:'row', alignItems:'center'}}>
         <Checkbox
           style={{ marginRight: 10 }}
           value={idRemember}
@@ -107,24 +138,23 @@ useEffect(() => {
         />      
         <Text style={{color:'#000'}}>아이디 기억하기</Text>
       </View>
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+
+      <TouchableOpacity style={styles.loginButton} onPress={() => handleLogin()}>
         <Text style={styles.loginButtonText}>로그인</Text>
       </TouchableOpacity>
+
       <TouchableOpacity style={styles.signInBtn} onPress={() => router.push('/signup')}>
         <Text style={styles.signInBtnText}>회원가입</Text>
       </TouchableOpacity>
 
-      {/* <TouchableOpacity style={styles.kakaoButton} onPress={handleKakaoLogin}>
-        <Text style={styles.kakaoButtonText}>카카오로 간편 로그인</Text>
-      </TouchableOpacity> */}
-      <View style={{display:'flex', flexDirection:'row', justifyContent:'center', width:'80%',marginTop: 20}}>
-      <TouchableOpacity  onPress={handleLogin} >
-        <Text >아이디 찾기</Text>
-      </TouchableOpacity>
-      <Text style={{marginHorizontal:10}}>|</Text>
-      <TouchableOpacity  onPress={handleLogin}>
-        <Text >비밀번호 찾기</Text>
-      </TouchableOpacity>
+      <View style={{flexDirection:'row', justifyContent:'center', width:'80%', marginTop:20}}>
+        <TouchableOpacity onPress={() => alert('아이디 찾기 준비중')}>
+          <Text>아이디 찾기</Text>
+        </TouchableOpacity>
+        <Text style={{marginHorizontal:10}}>|</Text>
+        <TouchableOpacity onPress={() => alert('비밀번호 찾기 준비중')}>
+          <Text>비밀번호 찾기</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
