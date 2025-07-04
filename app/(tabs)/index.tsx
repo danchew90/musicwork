@@ -1,5 +1,5 @@
 // app/index.tsx
-import { useEffect } from 'react';
+import { use, useEffect } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, Button } from 'react-native';
@@ -26,6 +26,16 @@ export default function Index() {
 
     checkLoginAndRedirect();
   }, []);
+  
+  useEffect(() => {
+    // router.push('/userDetailModal')
+    setTimeout(() => {
+      // router.push('/userDetailModal')
+      // router.replace('/userDetailModal')
+      // router.replace('/login')
+      router.push('/userDetailModal')
+    }, 500);
+  }, []);
 
   // 로딩 화면 또는 스플래시 화면
   return (
@@ -43,6 +53,10 @@ export default function Index() {
             })
           }}
         />
+        <Button
+  title="Open Modal Route"
+  onPress={() => router.push('/userDetailModal')}
+/>
     </View>
   );
 }

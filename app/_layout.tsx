@@ -78,6 +78,7 @@ const RootLayoutNav = () => {
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="userDetailModal" options={{ presentation: 'transparentModal',headerShown: false,animation:'fade' }} />
       </Stack>
     </ThemeProvider>
   );
