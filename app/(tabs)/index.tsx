@@ -3,38 +3,42 @@ import { use, useEffect } from 'react';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, Button } from 'react-native';
+import {supabase} from '../../lib/supabaseClient';
 
 export default function Index() {
   useEffect(() => {
     const checkLoginAndRedirect = async () => {
       try {
-        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
-        console.log('Index: checking login status:', isLoggedIn);
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');        
         
-        if (isLoggedIn === 'true') {
-          console.log('Index: redirecting to main app');
+        if (isLoggedIn === 'true') {          
           router.replace('/(tabs)');
-        } else {
-          console.log('Index: redirecting to login');
+        } else {          
           router.replace('/login');
         }
-      } catch (error) {
-        console.error('Index: AsyncStorage error:', error);
+      } catch (error) {        
         router.replace('/login');
       }
     };
 
     checkLoginAndRedirect();
   }, []);
-  
+  //user 추가 정보 확인
   useEffect(() => {
-    // router.push('/userDetailModal')
-    setTimeout(() => {
-      // router.push('/userDetailModal')
-      // router.replace('/userDetailModal')
-      // router.replace('/login')
-      router.push('/userDetailModal')
-    }, 500);
+    const checkUserDetails = async () => {
+      const userId = await AsyncStorage.getItem('UUID'); 
+      try {
+        const { data, error } = await supabase.from('user_detail').select('*').eq('id', userId);
+        if(data?.length == 0) {
+          router.push('/userDetailModal');
+        }else{
+        console.log(data)
+        }
+      } catch (error) {
+        console.error('Index: Error checking user details:', error);
+      }
+    }
+    checkUserDetails();
   }, []);
 
   // 로딩 화면 또는 스플래시 화면
