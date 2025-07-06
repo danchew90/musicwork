@@ -32,6 +32,7 @@ export default function LoginScreen() {
         alert('로그인 실패: ' + error.message);
         console.error('Login error:', error);
       } else {
+        await AsyncStorage.setItem('UUID', data.session.user.id);
         await AsyncStorage.setItem('isLoggedIn', 'true');
         await AsyncStorage.setItem('userEmail', email);
         await AsyncStorage.setItem('pw', password);
@@ -70,7 +71,8 @@ export default function LoginScreen() {
       try {
         const storedEmail = await AsyncStorage.getItem('userEmail');
         const storedPw = await AsyncStorage.getItem('pw');
-        if (storedEmail && storedPw) {
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+        if (storedEmail && storedPw&&isLoggedIn === 'true') {
           setId(storedEmail);
           setPw(storedPw);
           setAutoLoginTriggered(true);
