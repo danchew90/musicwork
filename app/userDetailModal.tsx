@@ -1,19 +1,24 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
+import { Platform, StyleSheet, View, Text, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../lib/supabaseClient';
 import RNPickerSelect from 'react-native-picker-select';
 
 export default function UserDetailModal() {
+  const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [academy, setAcademy] = useState<any[]>([]);
   const [selectedAcademyId, setSelectedAcademyId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadAcademyData = async () => {
       const { data, error } = await supabase.from('academy').select('*');
-      if (data) setAcademy(data);
-      if (error) console.error(error);
+      if (data) {
+        console.log('Loaded academy data:', data);
+        setAcademy(data);
+      }
+      if (error) console.error('Error loading academy data:', error);
     };
     loadAcademyData();
   }, []);
@@ -24,12 +29,22 @@ export default function UserDetailModal() {
   }));
 
   const handleSave = () => {
+    if (!name.trim()) {
+      Alert.alert('이름을 입력해주세요.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      Alert.alert('핸드폰번호를 입력해주세요.');
+      return;
+    }
     if (!selectedAcademyId) {
       Alert.alert('학원을 선택해주세요.');
       return;
     }
+    console.log('이름:', name);
+    console.log('핸드폰번호:', phoneNumber);
     console.log('선택된 학원 ID:', selectedAcademyId);
-    Alert.alert('저장 완료', `선택된 학원 ID: ${selectedAcademyId}`);
+    Alert.alert('저장 완료', `이름: ${name}\n핸드폰번호: ${phoneNumber}\n선택된 학원 ID: ${selectedAcademyId}`);
     router.back();
   };
 
@@ -37,18 +52,32 @@ export default function UserDetailModal() {
     <View style={styles.container}>
       <Text style={styles.title}>추가정보 등록</Text>
 
-      <RNPickerSelect
-        onValueChange={(value) => setSelectedAcademyId(value)}
-        items={academy.length > 0 ? pickerItems : [{ label: '학원 정보가 없습니다', value: null }]}
-        placeholder={{ label: '학원을 선택하세요', value: null }}
-        style={{
-          inputIOS: styles.input,
-          inputAndroid: styles.input,
-          placeholder: { color: '#999' },
-        }}
-        value={selectedAcademyId}
-        useNativeAndroidPickerStyle={false}
+      <TextInput
+        style={styles.input}
+        placeholder="이름"
+        value={name}
+        onChangeText={setName}
+        placeholderTextColor="#999"
       />
+
+      <TextInput
+        style={styles.input}
+        placeholder="핸드폰번호"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+        placeholderTextColor="#999"
+      />
+
+      <View style={styles.pickerContainer}>
+        <RNPickerSelect
+          onValueChange={(value) => setSelectedAcademyId(value)}
+          items={pickerItems}
+          placeholder={{ label: '학원을 선택하세요', value: null }}
+          style={pickerSelectStyles}
+          value={selectedAcademyId}
+        />
+      </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>저장하기</Text>
@@ -62,6 +91,34 @@ export default function UserDetailModal() {
     </View>
   );
 }
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#A68CFF',
+    borderRadius: 8,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#A68CFF',
+    borderRadius: 8,
+    color: 'black',
+    backgroundColor: 'white',
+    paddingRight: 30, // to ensure the text is never behind the icon
+  },
+  placeholder: {
+    color: '#999',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -88,6 +145,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 20,
     fontSize: 16,
+  },
+  pickerContainer: {
+    width: '80%',
+    marginBottom: 20,
   },
   saveButton: {
     width: '80%',
