@@ -1,0 +1,1 @@
+declare module 'react-native-custom-radio-group';

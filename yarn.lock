@@ -2366,6 +2366,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-native-modal-dropdown@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@types/react-native-modal-dropdown@npm:1.0.5"
+  dependencies:
+    "@types/react": "*"
+    "@types/react-native": ^0.70
+  checksum: e98e235a410ef295280cc1feb98b9e7a8c69071a54c655d3f6953f0eae2c5f633692395d2a5ac90977fb941d35ab6dcbe78e49a01068437f3ef04bde24902df4
+  languageName: node
+  linkType: hard
+
 "@types/react-native-vector-icons@npm:^6.4.6":
   version: 6.4.18
   resolution: "@types/react-native-vector-icons@npm:6.4.18"
@@ -2385,21 +2395,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
-  version: 19.1.8
-  resolution: "@types/react@npm:19.1.8"
+"@types/react@npm:19.0.10":
+  version: 19.0.10
+  resolution: "@types/react@npm:19.0.10"
   dependencies:
     csstype: ^3.0.2
-  checksum: 17e0c74d9c01214938fa805aaa8b97925bf3c5514e88fdf94bec42c0a6d4abbc63d4e30255db176f46fd7f0aa89f8085b9b2b2fa5abaffbbf7e5009386ada892
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:~19.0.10":
-  version: 19.0.14
-  resolution: "@types/react@npm:19.0.14"
-  dependencies:
-    csstype: ^3.0.2
-  checksum: fa749597f3500e1e8d045b4460cdbb6c67f4bc37e13ffb9d5ce059b71526f62f8c6836169772e3a1a64df9326291477d5c1c92262100161f74d5b5fa2a420c8d
+  checksum: e257e87bc3464825014523aecc700540a9da41c3c23136c03da9b2b7999251ac70ef9e594febdefeea6abe51da2475b42e5d96af6559d76f8d54bffc0b0ddacd
   languageName: node
   linkType: hard
 
@@ -5977,6 +5978,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash.findindex@npm:^4.6.0":
+  version: 4.6.0
+  resolution: "lodash.findindex@npm:4.6.0"
+  checksum: 94a52c6dc6d7427e5a2cc7a66550a20815caf77a95ef107b86b35591dc81499ffd9fcf4fbdeeafa5c7eae74b30c5743dd0e05a7c3a4c00d103a06f55151be3ee
+  languageName: node
+  linkType: hard
+
 "lodash.isequal@npm:^4.5.0":
   version: 4.5.0
   resolution: "lodash.isequal@npm:4.5.0"
@@ -5988,6 +5996,27 @@ __metadata:
   version: 3.0.2
   resolution: "lodash.isobject@npm:3.0.2"
   checksum: 6c1667cbc4494d0a13a3617a4b23278d6d02dac520311f2bbb43f16f2cf71d2e6eb9dec8057315b77459df4890c756a256a087d3f4baa44a79ab5d6c968b060e
+  languageName: node
+  linkType: hard
+
+"lodash.map@npm:^4.6.0":
+  version: 4.6.0
+  resolution: "lodash.map@npm:4.6.0"
+  checksum: 7369a41d7d24d15ce3bbd02a7faa3a90f6266c38184e64932571b9b21b758bd10c04ffd117d1859be1a44156f29b94df5045eff172bf8a97fddf68bf1002d12f
+  languageName: node
+  linkType: hard
+
+"lodash.noop@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "lodash.noop@npm:3.0.1"
+  checksum: 4525f763ee62f746197779ed1937d430145d039f8a5700d86bf509f02f9fc7302454423623bf1c32f1b9cded9d4f74a2f05d6e54686c40e9511a422254749f7f
+  languageName: node
+  linkType: hard
+
+"lodash.result@npm:^4.5.2":
+  version: 4.5.2
+  resolution: "lodash.result@npm:4.5.2"
+  checksum: 69e149271f1476ee0f3e7eb2b1b3cde083b56d47c297ca8b584b205aab0e8d56f1da1e3bfec7ae6b4dc5370494a573ebc41d06d4a28b190fd97e25e93dfd4839
   languageName: node
   linkType: hard
 
@@ -6554,6 +6583,7 @@ __metadata:
     "@react-navigation/native": ^7.1.6
     "@supabase/supabase-js": ^2.50.2
     "@types/react": ~19.0.10
+    "@types/react-native-modal-dropdown": ^1.0.5
     expo: ~53.0.12
     expo-checkbox: ^4.1.4
     expo-font: ~13.3.1
@@ -6569,7 +6599,9 @@ __metadata:
     react: 19.0.0
     react-dom: 19.0.0
     react-native: 0.79.4
+    react-native-custom-radio-group: ^1.0.1
     react-native-elements: ^3.4.3
+    react-native-modal-dropdown: ^1.0.2
     react-native-picker-select: ^9.3.1
     react-native-reanimated: ~3.17.4
     react-native-safe-area-context: 5.4.0
@@ -7174,7 +7206,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.8.1":
+"prop-types@npm:^15.6.0, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -7324,6 +7356,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-custom-radio-group@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "react-native-custom-radio-group@npm:1.0.1"
+  dependencies:
+    lodash.findindex: ^4.6.0
+    lodash.map: ^4.6.0
+    lodash.noop: ^3.0.1
+    lodash.result: ^4.5.2
+  checksum: 6322de65d8279cabfa900fb139eb36547d8de3725f23e4590f35f9d370a9220720d905dda5e6a5ef01215876029299f80c761895e904d14fb59ab6c51f6435ba
+  languageName: node
+  linkType: hard
+
 "react-native-edge-to-edge@npm:1.6.0":
   version: 1.6.0
   resolution: "react-native-edge-to-edge@npm:1.6.0"
@@ -7360,6 +7404,15 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 4cdf2b2fb5b131f2015c26d2cb7688b4a0c5f3c8474b1bf0ddfa9eabb0263df440c87262ae8f812a6ecab0d5310df0373bddad4b51f53dabb2ffee01e9ef0f44
+  languageName: node
+  linkType: hard
+
+"react-native-modal-dropdown@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "react-native-modal-dropdown@npm:1.0.2"
+  dependencies:
+    prop-types: ^15.6.0
+  checksum: 5fa87939451c2903fae3d1aaaa1cd404cc34ae32a854f212f31be2cd7d692bf9f26e6ee792f4db43c050017c96efb14d86045e497d2e637e9e21bb90016bee83
   languageName: node
   linkType: hard
 
