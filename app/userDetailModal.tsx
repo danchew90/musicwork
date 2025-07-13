@@ -114,7 +114,7 @@ export default function UserDetailModal() {
       return;
     } else {
       Alert.alert('저장 완료', `이름: ${name}\n핸드폰번호: ${formatPhoneNumber(phoneNumber)}\n선택된 학원 ID: ${selectedAcademyId}\n사용자 유형: ${selectedUserType}`);
-      router.back();
+    router.back();
     }
   };
 
@@ -131,7 +131,7 @@ export default function UserDetailModal() {
     setSelectedUserType(value);
   };
 
-  return (
+  return ( 
     <View style={styles.container}>
       <Text style={styles.title}>추가정보 등록</Text>
 
@@ -150,30 +150,30 @@ export default function UserDetailModal() {
 
       <View style={styles.rowContainer}>
         <Text style={styles.label}>이름</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="이름"
-          value={name}
-          onChangeText={setName}
-          placeholderTextColor="#999"
-        />
+      <TextInput
+        style={styles.input}
+        placeholder="이름"
+        value={name}
+        onChangeText={setName}
+        placeholderTextColor="#999"
+      />
       </View>
 
       <View style={styles.rowContainer}>
         <Text style={styles.label}>핸드폰번호</Text>
-        <TextInput
-          style={styles.input}
+      <TextInput
+        style={styles.input}
           placeholder="숫자만 입력하세요"
           value={formatPhoneNumber(phoneNumber)}
           onChangeText={(text) => setPhoneNumber(text.replace(/\D/g, ''))}
-          keyboardType="phone-pad"
-          placeholderTextColor="#999"
-        />
+        keyboardType="phone-pad"
+        placeholderTextColor="#999"
+      />
       </View>
 
       <View style={styles.rowContainer}>
         <Text style={styles.label}>학원</Text>
-        <View style={styles.pickerContainer}>
+      <View style={styles.pickerContainer}>
           <ModalDropdown
             options={academy}
             onSelect={(_index, value) => setSelectedAcademyId(value.id)}

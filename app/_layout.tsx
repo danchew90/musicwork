@@ -15,8 +15,6 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
-// unstable_settings 제거 - 조건부 라우팅과 충돌함
-
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +44,7 @@ export default function RootLayout() {
 
 const RootLayoutNav = () => {
   const colorScheme = useColorScheme();
+  
   const MyLightTheme = {
     ...DefaultTheme,
     colors: {
@@ -69,16 +68,50 @@ const RootLayoutNav = () => {
       border: Colors.dark.background,
     },
   };
-  // 모든 스크린을 등록하되 인덱스에서 리다이렉트 처리
+
+  const currentTheme = colorScheme === 'dark' ? MyDarkTheme : MyLightTheme;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? MyDarkTheme : MyLightTheme}>
-      <Stack>
+    <ThemeProvider value={currentTheme}>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: currentTheme.colors.background },
+          headerStyle: { backgroundColor: currentTheme.colors.card },
+          headerTintColor: currentTheme.colors.text,
+        }}
+      >
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="userDetailModal" options={{ presentation: 'transparentModal',headerShown: false,animation:'fade' }} />
+        <Stack.Screen 
+          name="userDetailModal" 
+          options={{ 
+            presentation: 'transparentModal',
+            headerShown: false,
+            animation: 'fade',
+            contentStyle: { backgroundColor: 'transparent' } // 모달은 투명 배경
+          }} 
+        />
+        
+        {/* Mission 관련 스크린들 추가 */}
+        <Stack.Screen 
+          name="mission/missionScreen" 
+          options={{ 
+            headerShown: true,
+            title: '숙제 하기~🎵',
+            headerBackTitle: '뒤로'
+          }} 
+        />
+        <Stack.Screen 
+          name="mission/missionDetail" 
+          options={{ 
+            headerShown: true,
+            title: '숙제 다시보기~🎶',
+            headerBackTitle: '뒤로'
+          }} 
+        />
       </Stack>
     </ThemeProvider>
   );
