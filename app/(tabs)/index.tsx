@@ -4,15 +4,13 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, Text, Button, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
-// import { supabase } from '../../lib/supabaseClient';
+import getEnvVars from '../../environment';
+const { supabaseUrl, supabaseKey } = getEnvVars();
 
 export default function Index() {
   const [missionList, setMissionList] = useState<any[] | null>([]);
   const [isLoading, setIsLoading] = useState(true);
-const supabaseUrl = 'https://qmalgysggobkgcfgywca.supabase.co'; // 본인 프로젝트 URL
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtYWxneXNnZ29ia2djZmd5d2NhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTM0ODIzNiwiZXhwIjoyMDY2OTI0MjM2fQ.h_ZUY9mPRtFZgVDCXN7O00TYPl9Gi4-rt_xPGqA2N30';     
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+ const supabase = createClient(supabaseUrl, supabaseKey);
   /**
    * Supabase 연결 상태를 확인하고 대기하는 함수입니다.
    * 네트워크 문제 등으로 연결이 불안정할 경우 재시도를 수행합니다.
