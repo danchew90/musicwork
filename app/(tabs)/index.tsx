@@ -255,15 +255,15 @@ export default function Index() {
               onPress={() => { moveToMissionDetail(mission.id, mission.done_flag) }}
             >
               <View style={styles.missionContent}>
-                <Text style={styles.missionTitle}>{formatMissionDate(mission.created_at)}</Text>
-                <Text style={styles.missionDeadline}>
+                <Text style={mission.done_flag ?styles.missionTitle:styles.yetMissionTitle}>{formatMissionDate(mission.created_at)}</Text>
+                <Text style={mission.done_flag?styles.missionDeadline:styles.yetMissionDeadline}>
                   마감: {formatDaysRemaining(mission.dead_line, mission.done_flag)}
                 </Text>
-                <Text style={styles.missionSession}>
+                <Text style={mission.done_flag?styles.missionSession:styles.yetMissionSession}>
                   세션: {mission.session}번 해야 함
                 </Text>
                 {/* memo가 있으면 미션 설명을 표시합니다. */}
-                {mission.memo && <Text style={styles.missionDescription}>{mission.memo}</Text>}
+                {mission.memo && <Text style={mission.done_flag?styles.missionDescription:styles.yetMissionDescription}>{mission.memo}</Text>}
               </View>
               {/* 미션이 완료되었으면 완료 스탬프 이미지를 표시합니다. */}
               {mission.done_flag && (
@@ -366,6 +366,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#333',
   },
+  yetMissionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    color: '#fff',
+  },
   missionDeadline: {
     fontSize: 14,
     color: '#666',
@@ -379,6 +385,21 @@ const styles = StyleSheet.create({
   missionDescription: {
     fontSize: 12,
     color: '#7B61FF',
+    marginTop: 5,
+  },
+  yetMissionDeadline: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 3,
+  },
+  yetMissionSession: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 3,
+  },
+  yetMissionDescription: {
+    fontSize: 12,
+    color: '#fff',
     marginTop: 5,
   },
   stampImage: {
