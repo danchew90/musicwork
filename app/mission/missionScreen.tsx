@@ -1,20 +1,18 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import Checkbox from 'expo-checkbox'; // expo-checkbox import
+import Checkbox from 'expo-checkbox';
 import { supabase } from '../../lib/supabaseClient';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-// 각 세션의 상태를 위한 타입 정의
-interface SessionState {
+// 각 세션의 데이터 구조 정의
+interface SessionData {
   isComplete: boolean;
-  // 나중에 녹음 파일 경로 등을 추가할 수 있습니다.
-  // recordingPath: string | null;
+  recordingStatus: 'idle' | 'recording' | 'paused' | 'playing';
 }
 
 export default function MissionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [sessionStates, setSessionStates] = useState<SessionState[]>([]);
+  const [sessionData, setSessionData] = useState<SessionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [missionTitle, setMissionTitle] = useState('');
 
@@ -34,11 +32,11 @@ export default function MissionScreen() {
 
         if (data) {
           setMissionTitle(data.memo || '미션 세부사항');
-          // 세션 개수만큼 초기 상태를 설정합니다.
-          const initialStates = Array.from({ length: data.session || 0 }, () => ({
+          const initialData = Array.from({ length: data.session || 0 }, () => ({
             isComplete: false,
-          }));
-          setSessionStates(initialStates);
+            recordingStatus: 'idle' as const,
+          } as SessionData));
+          setSessionData(initialData);
         }
       } catch (error) {
         console.error('Error fetching mission:', error);
@@ -50,47 +48,70 @@ export default function MissionScreen() {
     fetchMission();
   }, [id]);
 
-  // 체크박스 상태 변경 핸들러
-  const handleCheckboxChange = (index: number) => {
-    const newStates = [...sessionStates];
-    newStates[index].isComplete = !newStates[index].isComplete;
-    setSessionStates(newStates);
+  // 세션 상태 업데이트 핸들러
+  const handleSessionStateChange = (index: number, newState: Partial<SessionData>) => {
+    const newData = [...sessionData];
+    newData[index] = { ...newData[index], ...newState };
+    setSessionData(newData);
   };
 
   const renderSessionCards = () => {
     if (isLoading) {
       return <ActivityIndicator size="large" color="#7B61FF" />;
     }
-
-    if (sessionStates.length === 0) {
+    if (sessionData.length === 0) {
       return <Text style={styles.infoText}>이 미션에는 세션이 없습니다.</Text>;
     }
 
-    return sessionStates.map((state, index) => (
+    return sessionData.map((session, index) => (
       <View key={index} style={styles.missionCard}>
+        {/* --- 카드 헤더: 세션 번호, 완료 체크박스 --- */}
         <View style={styles.cardHeader}>
-          <Text style={styles.sessionIndexText}>No. {index + 1}</Text>
+          <Text style={styles.sessionIndexText}>세션 {index + 1}</Text>
           <View style={styles.checkboxContainer}>
             <Checkbox
-              value={state.isComplete}
-              onValueChange={() => handleCheckboxChange(index)}
-              color={state.isComplete ? '#4630EB' : undefined}
+              value={session.isComplete}
+              onValueChange={() => handleSessionStateChange(index, { isComplete: !session.isComplete })}
+              color={session.isComplete ? '#4630EB' : undefined}
             />
             <Text style={styles.checkboxLabel}>완료</Text>
           </View>
         </View>
 
+        {/* --- 카드 본문: 파형, 컨트롤 버튼 --- */}
         <View style={styles.cardBody}>
-          {/* 녹음 기능 UI 영역 */}
-          <TouchableOpacity style={styles.recordButton}>
-            <Text style={styles.recordButtonText}>
-                <MaterialCommunityIcons name="record-circle-outline" size={24} color="red" />
-            </Text>
-          </TouchableOpacity>
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>녹음 컨트롤 및 파형 표시 영역</Text>
+          {/* 컨트롤 버튼 그룹 */}
+          <View style={styles.controlsContainer}>
+            <TouchableOpacity 
+              style={styles.controlButton} 
+              onPress={() => handleSessionStateChange(index, { recordingStatus: 'recording' })}
+            >
+              <Text style={styles.controlButtonText}>녹음</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.controlButton} 
+              onPress={() => handleSessionStateChange(index, { recordingStatus: 'playing' })}
+            >
+              <Text style={styles.controlButtonText}>재생</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.controlButton} 
+              onPress={() => handleSessionStateChange(index, { recordingStatus: 'paused' })}
+            >
+              <Text style={styles.controlButtonText}>일시정지</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.controlButton} 
+              onPress={() => handleSessionStateChange(index, { recordingStatus: 'idle' })}
+            >
+              <Text style={styles.controlButtonText}>정지</Text>
+            </TouchableOpacity>
           </View>
         </View>
+                  {/* 음파 파형 표시 영역 */}
+          <View style={styles.waveformContainer}>
+            <Text style={styles.waveformText}>음파 파형 표시 영역</Text>
+          </View>
       </View>
     ));
   };
@@ -147,7 +168,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     paddingBottom: 10,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   sessionIndexText: {
     fontSize: 18,
@@ -162,40 +183,35 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
   },
-  cardBody: {
-    marginTop: 10,
-  },
-recordButton: {
-  backgroundColor: '#fff',
-  paddingVertical: 12,
-  borderRadius: 8,
-  alignItems: 'center',
-  marginBottom: 15,
-  borderWidth: 1,
-  borderColor: '#7B61FF',
-  // 드롭쉐도우 추가
-  shadowColor: '#000',
-  shadowOffset: {
-    width: 0,
-    height: 2,
-  },
-  shadowOpacity: 0.25,
-  shadowRadius: 3.84,
-  elevation: 5, // Android용
-},
-  recordButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  placeholder: {
+  cardBody: {},
+  waveformContainer: {
     backgroundColor: '#f5f5f5',
     height: 80,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 15,
   },
-  placeholderText: {
+  waveformText: {
     color: '#aaa',
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  controlButton: {
+    backgroundColor: '#7B61FF',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5, // 원형에 가깝게
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
