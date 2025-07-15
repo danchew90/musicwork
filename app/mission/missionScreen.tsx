@@ -1,20 +1,64 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import Checkbox from 'expo-checkbox';
 import { supabase } from '../../lib/supabaseClient';
+import { FontAwesome, FontAwesome5, FontAwesome6, Foundation } from '@expo/vector-icons';
+import AudioRecord from 'react-native-audio-record';
+import { Audio } from 'expo-av';
+import { Canvas, Path, Skia } from '@shopify/react-native-skia';
+import { Buffer } from 'buffer';
+import RNFS from 'react-native-fs';
 
-// 각 세션의 데이터 구조 정의
 interface SessionData {
   isComplete: boolean;
   recordingStatus: 'idle' | 'recording' | 'paused' | 'playing';
+  audioUri: string | null;
+  waveform: number[];
+  playbackInstance: Audio.Sound | null;
 }
+
+const WaveformDisplay = ({ waveform, width, height }: { waveform: number[], width: number, height: number }) => {
+  const path = Skia.Path.Make();
+  path.moveTo(0, height / 2);
+
+  if (waveform.length > 1) {
+    waveform.forEach((amplitude, index) => {
+      const x = (index / (waveform.length - 1)) * width;
+      const y = (height / 2) - ((amplitude - 127.5) / 127.5) * (height / 2);
+      path.lineTo(x, y);
+    });
+  } else {
+    path.lineTo(width, height / 2);
+  }
+
+  return (
+    <Canvas style={{ width, height }}>
+      <Path path={path} style="stroke" color="#7B61FF" strokeWidth={2} />
+    </Canvas>
+  );
+};
 
 export default function MissionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [sessionData, setSessionData] = useState<SessionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [missionTitle, setMissionTitle] = useState('');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const isRecordingRef = useRef(false);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Audio.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+
+    return () => {
+      if (isRecordingRef.current) {
+        AudioRecord.stop();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -24,9 +68,9 @@ export default function MissionScreen() {
       try {
         const { data, error } = await supabase
           .from('mission')
-          .select('session, memo')
+          .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -35,7 +79,10 @@ export default function MissionScreen() {
           const initialData = Array.from({ length: data.session || 0 }, () => ({
             isComplete: false,
             recordingStatus: 'idle' as const,
-          } as SessionData));
+            audioUri: null,
+            waveform: [],
+            playbackInstance: null,
+          }));
           setSessionData(initialData);
         }
       } catch (error) {
@@ -48,11 +95,117 @@ export default function MissionScreen() {
     fetchMission();
   }, [id]);
 
-  // 세션 상태 업데이트 핸들러
   const handleSessionStateChange = (index: number, newState: Partial<SessionData>) => {
-    const newData = [...sessionData];
-    newData[index] = { ...newData[index], ...newState };
-    setSessionData(newData);
+    setSessionData(prevData => {
+      const newData = [...prevData];
+      if (newData[index]) {
+        newData[index] = { ...newData[index], ...newState };
+      }
+      return newData;
+    });
+  };
+
+  const startRecording = async (index: number) => {
+    if (!hasPermission) {
+      console.log('Permission to record audio not granted');
+      return;
+    }
+
+    handleSessionStateChange(index, { recordingStatus: 'recording', waveform: [] });
+
+    const options = {
+      sampleRate: 16000,
+      channels: 1,
+      bitsPerSample: 16,
+      audioSource: 6,
+      wavFile: `session_${id}_${index}.wav`,
+    };
+
+    AudioRecord.init(options);
+    isRecordingRef.current = true;
+
+    AudioRecord.on('data', (data) => {
+      const chunk = Buffer.from(data, 'base64');
+      const waveformData = Array.from(chunk);
+      setSessionData(prev => {
+        if (prev[index]?.recordingStatus !== 'recording') return prev;
+        const newWaveform = [...prev[index].waveform, ...waveformData].slice(-500);
+        const newData = [...prev];
+        newData[index] = { ...newData[index], waveform: newWaveform };
+        return newData;
+      });
+    });
+
+    AudioRecord.start();
+  };
+
+  const stopRecording = async (index: number) => {
+    if (!isRecordingRef.current) return;
+
+    isRecordingRef.current = false;
+
+    try {
+      const audioFile = await AudioRecord.stop();
+      handleSessionStateChange(index, { recordingStatus: 'idle', audioUri: audioFile });
+      uploadRecording(index, audioFile);
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+
+  const playRecording = async (index: number) => {
+    const session = sessionData[index];
+    if (!session.audioUri) return;
+
+    try {
+      await stopPlayback(index);
+      const { sound } = await Audio.Sound.createAsync({ uri: 'file://' + session.audioUri });
+      handleSessionStateChange(index, { playbackInstance: sound, recordingStatus: 'playing' });
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate(status => {
+        if (status.isLoaded && status.didJustFinish) {
+          handleSessionStateChange(index, { recordingStatus: 'idle' });
+          sound.unloadAsync();
+        }
+      });
+    } catch (error) {
+      console.error('Failed to play recording', error);
+    }
+  };
+
+  const pausePlayback = async (index: number) => {
+    const session = sessionData[index];
+    if (session.playbackInstance && session.recordingStatus === 'playing') {
+      await session.playbackInstance.pauseAsync();
+      handleSessionStateChange(index, { recordingStatus: 'paused' });
+    }
+  };
+
+  const stopPlayback = async (index: number) => {
+    const session = sessionData[index];
+    if (session.playbackInstance) {
+      await session.playbackInstance.stopAsync();
+      await session.playbackInstance.unloadAsync();
+      handleSessionStateChange(index, { playbackInstance: null, recordingStatus: 'idle' });
+    }
+  };
+
+  const uploadRecording = async (index: number, fileUri: string) => {
+    try {
+      const fileContent = await RNFS.readFile(fileUri, 'base64');
+      const fileName = `mission_${id}_session_${index + 1}.wav`;
+      const { error } = await supabase.storage
+        .from('recordings')
+        .upload(fileName, fileContent, {
+          contentType: 'audio/wav',
+          upsert: true,
+        });
+
+      if (error) throw error;
+      console.log(`Session ${index + 1} uploaded successfully!`);
+    } catch (error) {
+      console.error('Error uploading recording:', error);
+    }
   };
 
   const renderSessionCards = () => {
@@ -65,7 +218,6 @@ export default function MissionScreen() {
 
     return sessionData.map((session, index) => (
       <View key={index} style={styles.missionCard}>
-        {/* --- 카드 헤더: 세션 번호, 완료 체크박스 --- */}
         <View style={styles.cardHeader}>
           <Text style={styles.sessionIndexText}>세션 {index + 1}</Text>
           <View style={styles.checkboxContainer}>
@@ -78,40 +230,45 @@ export default function MissionScreen() {
           </View>
         </View>
 
-        {/* --- 카드 본문: 파형, 컨트롤 버튼 --- */}
         <View style={styles.cardBody}>
-          {/* 컨트롤 버튼 그룹 */}
           <View style={styles.controlsContainer}>
             <TouchableOpacity 
               style={styles.controlButton} 
-              onPress={() => handleSessionStateChange(index, { recordingStatus: 'recording' })}
+              onPress={() => startRecording(index)} 
+              disabled={session.recordingStatus === 'recording'}
             >
-              <Text style={styles.controlButtonText}>녹음</Text>
+              <Foundation name="record" size={18} color={session.recordingStatus === 'recording' ? 'grey' : 'red'} />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.controlButton} 
-              onPress={() => handleSessionStateChange(index, { recordingStatus: 'playing' })}
+              onPress={() => playRecording(index)} 
+              disabled={!session.audioUri || session.recordingStatus === 'playing'}
             >
-              <Text style={styles.controlButtonText}>재생</Text>
+              <FontAwesome name="play" size={18} color={!session.audioUri || session.recordingStatus === 'playing' ? 'grey' : '#7B61FF'} />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.controlButton} 
-              onPress={() => handleSessionStateChange(index, { recordingStatus: 'paused' })}
+              onPress={() => pausePlayback(index)} 
+              disabled={session.recordingStatus !== 'playing'}
             >
-              <Text style={styles.controlButtonText}>일시정지</Text>
+              <FontAwesome6 name="pause" size={18} color={session.recordingStatus !== 'playing' ? 'grey' : '#7B61FF'} />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.controlButton} 
-              onPress={() => handleSessionStateChange(index, { recordingStatus: 'idle' })}
+              onPress={() => stopRecording(index)} 
+              disabled={session.recordingStatus !== 'recording'}
             >
-              <Text style={styles.controlButtonText}>정지</Text>
+              <FontAwesome5 name="stop" size={18} color={session.recordingStatus !== 'recording' ? 'grey' : '#7B61FF'} />
             </TouchableOpacity>
           </View>
         </View>
-                  {/* 음파 파형 표시 영역 */}
-          <View style={styles.waveformContainer}>
+        <View style={styles.waveformContainer}>
+          {session.recordingStatus === 'recording' || session.audioUri ? (
+            <WaveformDisplay waveform={session.waveform} width={300} height={80} />
+          ) : (
             <Text style={styles.waveformText}>음파 파형 표시 영역</Text>
-          </View>
+          )}
+        </View>
       </View>
     ));
   };
@@ -200,14 +357,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     marginBottom: 15,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
   },
   controlButton: {
-    backgroundColor: '#7B61FF',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 15,
-    borderRadius: 5, // 원형에 가깝게
+    borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#7B61FF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,   
   },
   controlButtonText: {
     color: '#fff',
