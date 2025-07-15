@@ -124,7 +124,7 @@ export default function MissionScreen() {
     AudioRecord.init(options);
     isRecordingRef.current = true;
 
-    AudioRecord.on('data', (data) => {
+    AudioRecord.on('data', (data:any) => {
       const chunk = Buffer.from(data, 'base64');
       const waveformData = Array.from(chunk);
       setSessionData(prev => {
